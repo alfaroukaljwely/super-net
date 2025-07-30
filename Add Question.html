@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Question</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background-color: #d9d0d0;
+        background-image: url("assets/unsplashf8egRYt5RGk.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      .pageTitle {
+        color: #1a73e8;
+        margin-bottom: 10px;
+      }
+
+      .backgroundImage {
+        position: relative;
+        background-image: url("/assets/unsplashf8egRYt5RGk.jpg");
+        background-size: cover;
+        background-position: center;
+        height: 600px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .overlayForm {
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 30px;
+        border-radius: 10px;
+        position: absolute;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        width: 350px;
+      }
+
+      .overlayForm h3 {
+        text-align: center;
+        font-family: "Inter", sans-serif;
+        color: #133a5e;
+        margin-bottom: 20px;
+      }
+
+      form input[type="text"],
+      form input[type="file"],
+      form textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1rem;
+      }
+
+      textarea {
+        min-height: 40px;
+        max-height: 200px;
+        resize: none;
+        overflow: hidden;
+        transition: height 0.2s ease;
+      }
+
+      .fileInputWrapper {
+        display: flex;
+        height: 60px;
+        margin-bottom: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .fileLabel {
+        flex: 1;
+        text-align: center;
+        background: #fff;
+        color: #555;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .fileLabel:hover {
+        background: #eaeaea;
+      }
+
+      #fileChosen {
+        flex: 1;
+        text-align: center;
+        padding: 0;
+        background: #f5f5f5;
+        color: #555;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .buttons {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .cancelBtn {
+        background-color: #f1f1f1;
+        color: #1a1a1a;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+
+      .cancelBtn:hover {
+        background: #8d0808cb;
+      }
+
+      .postBtn {
+        background-color: #002f5e;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+
+      .postBtn:hover {
+        background-color: #002f5e94;
+        color: #002f5e;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="backgroundImage">
+        <div class="overlayForm">
+          <h3>Ask Question</h3>
+          <form id="questionForm">
+            <input
+              type="text"
+              id="questionInput"
+              placeholder="Add question"
+              required
+            />
+            <input
+              type="text"
+              id="authorInput"
+              placeholder="Your name"
+              required
+            />
+            <textarea
+              id="descriptionInput"
+              placeholder="Add description"
+              required
+            ></textarea>
+            <input
+              type="text"
+              id="tagsInput"
+              placeholder="Add tags (comma separated)"
+            />
+
+            <div class="fileInputWrapper">
+              <label for="fileUpload" class="fileLabel">Choose file</label>
+              <span id="fileChosen">No file chosen</span>
+              <input
+                class="fileInput"
+                type="file"
+                id="fileUpload"
+                title="Choose file"
+                accept="image/*"
+                style="display: none"
+              />
+            </div>
+
+            <div id="imagePreview" style="display: none; margin-bottom: 15px">
+              <img
+                id="previewImg"
+                style="max-width: 100%; max-height: 200px; border-radius: 5px"
+              />
+            </div>
+
+            <div class="buttons">
+              <button type="button" class="cancelBtn" id="clearBtn">
+                Cancel
+              </button>
+              <button type="submit" class="postBtn">Post</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const questionInput = document.getElementById("questionInput");
+      const authorInput = document.getElementById("authorInput");
+      const descriptionInput = document.getElementById("descriptionInput");
+      const tagsInput = document.getElementById("tagsInput");
+      const fileUpload = document.getElementById("fileUpload");
+      const fileChosen = document.getElementById("fileChosen");
+      const clearBtn = document.getElementById("clearBtn");
+      const questionForm = document.getElementById("questionForm");
+      const imagePreview = document.getElementById("imagePreview");
+      const previewImg = document.getElementById("previewImg");
+
+      let selectedImageBase64 = null;
+
+      // Load from localStorage
+      window.addEventListener("DOMContentLoaded", () => {
+        questionInput.value = localStorage.getItem("savedQuestion") || "";
+        authorInput.value = localStorage.getItem("savedAuthor") || "";
+        descriptionInput.value = localStorage.getItem("savedDescription") || "";
+        tagsInput.value = localStorage.getItem("savedTags") || "";
+        fileChosen.textContent =
+          localStorage.getItem("savedFileName") || "No file chosen";
+
+        // Load saved image preview
+        const savedImageBase64 = localStorage.getItem("savedImageBase64");
+        if (savedImageBase64) {
+          selectedImageBase64 = savedImageBase64;
+          previewImg.src = savedImageBase64;
+          imagePreview.style.display = "block";
+        }
+
+        autoResizeTextarea();
+      });
+
+      // Save to localStorage
+      questionInput.addEventListener("input", () => {
+        localStorage.setItem("savedQuestion", questionInput.value);
+      });
+
+      authorInput.addEventListener("input", () => {
+        localStorage.setItem("savedAuthor", authorInput.value);
+      });
+
+      descriptionInput.addEventListener("input", () => {
+        localStorage.setItem("savedDescription", descriptionInput.value);
+        autoResizeTextarea();
+      });
+
+      tagsInput.addEventListener("input", () => {
+        localStorage.setItem("savedTags", tagsInput.value);
+      });
+
+      // Handle file upload and convert to base64
+      fileUpload.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          // Validate file type
+          if (!file.type.startsWith("image/")) {
+            alert("Please select a valid image file.");
+            fileUpload.value = "";
+            fileChosen.textContent = "No file chosen";
+            selectedImageBase64 = null;
+            imagePreview.style.display = "none";
+            localStorage.removeItem("savedImageBase64");
+            return;
+          }
+
+          // Validate file size (max 5MB)
+          const maxSize = 5 * 1024 * 1024; // 5MB
+          if (file.size > maxSize) {
+            alert("Image file size must be less than 5MB.");
+            fileUpload.value = "";
+            fileChosen.textContent = "No file chosen";
+            selectedImageBase64 = null;
+            imagePreview.style.display = "none";
+            localStorage.removeItem("savedImageBase64");
+            return;
+          }
+
+          const fileName = file.name;
+          fileChosen.textContent = fileName;
+          localStorage.setItem("savedFileName", fileName);
+
+          // Convert image to base64
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            selectedImageBase64 = e.target.result;
+            localStorage.setItem("savedImageBase64", selectedImageBase64);
+            previewImg.src = selectedImageBase64;
+            imagePreview.style.display = "block";
+          };
+          reader.onerror = function () {
+            alert("Error reading the image file. Please try again.");
+            fileUpload.value = "";
+            fileChosen.textContent = "No file chosen";
+            selectedImageBase64 = null;
+            imagePreview.style.display = "none";
+            localStorage.removeItem("savedImageBase64");
+          };
+          reader.readAsDataURL(file);
+        } else {
+          fileChosen.textContent = "No file chosen";
+          selectedImageBase64 = null;
+          localStorage.removeItem("savedImageBase64");
+          imagePreview.style.display = "none";
+        }
+      });
+
+      // Clear button
+      clearBtn.addEventListener("click", () => {
+        localStorage.removeItem("savedQuestion");
+        localStorage.removeItem("savedAuthor");
+        localStorage.removeItem("savedDescription");
+        localStorage.removeItem("savedTags");
+        localStorage.removeItem("savedFileName");
+        localStorage.removeItem("savedImageBase64");
+        questionInput.value = "";
+        authorInput.value = "";
+        descriptionInput.value = "";
+        tagsInput.value = "";
+        fileChosen.textContent = "No file chosen";
+        selectedImageBase64 = null;
+        fileUpload.value = "";
+        autoResizeTextarea();
+        imagePreview.style.display = "none";
+      });
+
+      // Form submission
+      questionForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const questionData = {
+          title: questionInput.value.trim(),
+          author: authorInput.value.trim(),
+          body: descriptionInput.value.trim(),
+          tags: tagsInput.value.trim(),
+          imageBase64: selectedImageBase64,
+          creationDate: new Date().toISOString(),
+          id: Date.now().toString(),
+          likes: 0,
+          comments: 0,
+        };
+
+        // Get existing questions from localStorage
+        const existingQuestions = JSON.parse(
+          localStorage.getItem("questions") || "[]"
+        );
+
+        // Add new question to the beginning of the array
+        existingQuestions.unshift(questionData);
+
+        // Save back to localStorage
+        localStorage.setItem("questions", JSON.stringify(existingQuestions));
+
+        // Clear form data from localStorage
+        localStorage.removeItem("savedQuestion");
+        localStorage.removeItem("savedAuthor");
+        localStorage.removeItem("savedDescription");
+        localStorage.removeItem("savedTags");
+        localStorage.removeItem("savedFileName");
+        localStorage.removeItem("savedImageBase64");
+
+        // Redirect to Community.html
+        window.location.href = "Community.html";
+      });
+
+      // Auto resize textarea
+      function autoResizeTextarea() {
+        descriptionInput.style.height = "auto";
+        descriptionInput.style.height = descriptionInput.scrollHeight + "px";
+      }
+    </script>
+  </body>
+</html>
